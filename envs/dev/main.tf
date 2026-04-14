@@ -11,18 +11,18 @@ module "vpc" {
   private_rds_subnet_cidrs = ["10.0.5.0/24", "10.0.6.0/24"]
 }
 
-module "eks" {
-  source = "../../modules/eks"
+#module "eks" {
+#  source = "../../modules/eks"
 
-  project            = "pharma"
-  env                = "dev"
-  cluster_version    = "1.33"
-  subnet_ids         = module.vpc.private_eks_subnet_ids
-  node_instance_type = "t3.small"
-  desired_capacity   = 1
-  min_size           = 1
-  max_size           = 4
-}
+#  project            = "pharma"
+#  env                = "dev"
+#  cluster_version    = "1.33"
+#  subnet_ids         = module.vpc.private_eks_subnet_ids
+#  node_instance_type = "t3.small"
+#  desired_capacity   = 1
+#  min_size           = 1
+#  max_size           = 4
+#}
 
 module "rds" {
   source = "../../modules/rds"
@@ -35,7 +35,7 @@ module "rds" {
   db_name               = "pharmadb"
   db_username           = "pharmaadmin"
   db_password           = var.db_password
-}
+} 
 
 module "ecr" {
   source = "../../modules/ecr"
