@@ -92,6 +92,11 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
+      - name: Release state lock on failure
+        if: failure() || cancelled()
+        run: |
+          aws s3 rm s3://zen-pharma-terraform-state-ravdy/envs/dev/terraform.tfstate.tflock || true
+
       - name: Upload plan file
         if: steps.plan.outcome == 'success'
         uses: actions/upload-artifact@v4
@@ -144,6 +149,11 @@ jobs:
             -no-color \
             tfplan
 
+      - name: Release state lock on failure
+        if: failure() || cancelled()
+        run: |
+          aws s3 rm s3://zen-pharma-terraform-state-ravdy/envs/dev/terraform.tfstate.tflock || true
+
   # ── Destroy ───────────────────────────────────────────────────────────────
   destroy:
     name: Terraform Destroy
@@ -183,3 +193,8 @@ jobs:
             -var="github_org=ravdy" \
             -auto-approve \
             -no-color
+
+      - name: Release state lock on failure
+        if: failure() || cancelled()
+        run: |
+          aws s3 rm s3://zen-pharma-terraform-state-ravdy/envs/dev/terraform.tfstate.tflock || true

@@ -45,9 +45,12 @@ module "ecr" {
   repositories = [
     "api-gateway",
     "auth-service",
-    "pharma-ui",
+    "drug-catalog-service",
+    "inventory-service",
+    "manufacturing-service",
     "notification-service",
-    "drug-catalog-service"
+    "pharma-ui",
+    "supplier-service"
   ]
 }
 
