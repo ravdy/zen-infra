@@ -1,4 +1,4 @@
-# Initial dev environment setup
+# Initial dev environment setups
 data "aws_caller_identity" "current" {}
 
 module "vpc" {
@@ -20,9 +20,9 @@ module "eks" {
   cluster_version    = "1.33"
   subnet_ids         = module.vpc.private_eks_subnet_ids
   node_instance_type = "t3.small"
-  desired_capacity   = 1
-  min_size           = 1
-  max_size           = 4
+  desired_capacity   = 5
+  min_size           = 3
+  max_size           = 8
 }
 
 module "rds" {
@@ -48,7 +48,8 @@ module "ecr" {
     "auth-service",
     "pharma-ui",
     "notification-service",
-    "drug-catalog-service"
+    "drug-catalog-service",
+    "new-service"
   ]
 }
 
