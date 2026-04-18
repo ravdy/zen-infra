@@ -320,7 +320,7 @@ terraform {
   backend "s3" {
     bucket       = "zen-pharma-terraform-state"
     key          = "envs/dev/terraform.tfstate"
-    region       = "us-east-1"
+    region       = "eu-west-2"
     encrypt      = true
     use_lockfile = true   # S3 native locking — no DynamoDB needed (Terraform ≥ 1.10)
   }
@@ -736,7 +736,7 @@ Terraform handles this through provider role assumption:
 ```hcl
 # Assume role into a specific account
 provider "aws" {
-  region = "us-east-1"
+  region = "eu-west-2"
   assume_role {
     role_arn = "arn:aws:iam::PROD_ACCOUNT_ID:role/TerraformRole"
   }

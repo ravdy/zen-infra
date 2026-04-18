@@ -15,7 +15,7 @@
 #   - uses: aws-actions/configure-aws-credentials@v4
 #     with:
 #       role-to-assume: arn:aws:iam::ACCOUNT_ID:role/pharma-dev-github-actions-role
-#       aws-region: us-east-1
+#       aws-region: eu-west-2
 # ─────────────────────────────────────────────────────────────────────────────
 
 # GitHub Actions OIDC provider — one per AWS account, shared across all repos

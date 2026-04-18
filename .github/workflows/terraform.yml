@@ -33,7 +33,7 @@ permissions:
 
 env:
   TF_VERSION: '1.10.0'
-  AWS_REGION: us-east-1
+  AWS_REGION: eu-west-2
 
 # Prevent parallel runs on the same branch — avoids state conflicts
 concurrency:
@@ -190,7 +190,7 @@ jobs:
           terraform destroy \
             -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
             -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
-            -var="github_org=ravdy" \
+            -var="github_org=rkoneru-hub" \
             -auto-approve \
             -no-color
 

@@ -34,7 +34,7 @@ This repository provisions a complete Kubernetes-based platform on AWS for the z
 
 ```
 AWS Account
-└── us-east-1
+└── eu-west-2
     ├── VPC (10.0.0.0/16)
     │   ├── Public Subnets       (10.0.1.0/24, 10.0.2.0/24)   — NAT Gateway, Load Balancers
     │   ├── Private EKS Subnets  (10.0.3.0/24, 10.0.4.0/24)   — EKS worker nodes
@@ -170,7 +170,7 @@ Save the **Access Key ID** and **Secret Access Key** — you will need these in 
 aws configure
 # AWS Access Key ID: <your-access-key-id>
 # AWS Secret Access Key: <your-secret-access-key>
-# Default region name: us-east-1
+# Default region name: eu-west-2
 # Default output format: json
 ```
 
@@ -195,7 +195,7 @@ Replace `YOUR-GITHUB-USERNAME` with your actual GitHub username to make the buck
 # Create the bucket
 aws s3api create-bucket \
   --bucket zen-pharma-terraform-state-YOUR-GITHUB-USERNAME \
-  --region us-east-1
+  --region eu-west-2
 
 # Enable versioning (allows state rollback)
 aws s3api put-bucket-versioning \
@@ -259,7 +259,7 @@ terraform {
   backend "s3" {
     bucket       = "zen-pharma-terraform-state-YOUR-GITHUB-USERNAME"
     key          = "envs/dev/terraform.tfstate"
-    region       = "us-east-1"
+    region       = "eu-west-2"
     encrypt      = true
     use_lockfile = true
   }
@@ -441,7 +441,7 @@ Apply complete! Resources: 45 added, 0 changed, 0 destroyed.
 Outputs:
 
 eks_cluster_name = "pharma-dev-cluster"
-rds_endpoint     = "pharma-dev-postgres.xxxxxxxx.us-east-1.rds.amazonaws.com"
+rds_endpoint     = "pharma-dev-postgres.xxxxxxxx.eu-west-2.rds.amazonaws.com"
 ```
 
 ### 11.2 Verify in AWS Console
@@ -468,7 +468,7 @@ rds_endpoint     = "pharma-dev-postgres.xxxxxxxx.us-east-1.rds.amazonaws.com"
 ```bash
 # Update local kubeconfig
 aws eks update-kubeconfig \
-  --region us-east-1 \
+  --region eu-west-2 \
   --name pharma-dev-cluster
 
 # Verify connection
@@ -488,12 +488,12 @@ kubectl get namespaces
 | Resource | Value | Purpose |
 |---|---|---|
 | VPC CIDR | `10.0.0.0/16` | Main network |
-| Public Subnet 1 | `10.0.1.0/24` (us-east-1a) | NAT Gateway, Load Balancers |
-| Public Subnet 2 | `10.0.2.0/24` (us-east-1b) | NAT Gateway, Load Balancers |
-| Private EKS Subnet 1 | `10.0.3.0/24` (us-east-1a) | EKS worker nodes |
-| Private EKS Subnet 2 | `10.0.4.0/24` (us-east-1b) | EKS worker nodes |
-| Private RDS Subnet 1 | `10.0.5.0/24` (us-east-1a) | RDS PostgreSQL |
-| Private RDS Subnet 2 | `10.0.6.0/24` (us-east-1b) | RDS PostgreSQL |
+| Public Subnet 1 | `10.0.1.0/24` (eu-west-2a) | NAT Gateway, Load Balancers |
+| Public Subnet 2 | `10.0.2.0/24` (eu-west-2b) | NAT Gateway, Load Balancers |
+| Private EKS Subnet 1 | `10.0.3.0/24` (eu-west-2a) | EKS worker nodes |
+| Private EKS Subnet 2 | `10.0.4.0/24` (eu-west-2b) | EKS worker nodes |
+| Private RDS Subnet 1 | `10.0.5.0/24` (eu-west-2a) | RDS PostgreSQL |
+| Private RDS Subnet 2 | `10.0.6.0/24` (eu-west-2b) | RDS PostgreSQL |
 
 Worker nodes and RDS are in private subnets — no direct internet access. Outbound traffic routes through the NAT Gateway.
 
@@ -670,7 +670,7 @@ aws s3 rm s3://zen-pharma-terraform-state-YOUR-GITHUB-USERNAME --recursive
 # Delete the bucket
 aws s3api delete-bucket \
   --bucket zen-pharma-terraform-state-YOUR-GITHUB-USERNAME \
-  --region us-east-1
+  --region eu-west-2
 ```
 
 ---
@@ -687,7 +687,7 @@ for repo in api-gateway auth-service pharma-ui notification-service drug-catalog
   aws ecr delete-repository \
     --repository-name $repo \
     --force \
-    --region us-east-1
+    --region eu-west-2
 done
 ```
 
@@ -745,7 +745,7 @@ If you only changed workflow files (`.github/workflows/`), the `paths` filter pr
 
 ```bash
 # Re-fetch credentials
-aws eks update-kubeconfig --region us-east-1 --name pharma-dev-cluster
+aws eks update-kubeconfig --region eu-west-2 --name pharma-dev-cluster
 
 # Check your AWS identity
 aws sts get-caller-identity
