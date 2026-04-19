@@ -35,7 +35,7 @@ concurrency:
 
 jobs:
   plan:
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.action != 'destroy'
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action != 'destroy')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -81,7 +81,7 @@ jobs:
 
   apply:
     needs: plan
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: dev
     defaults:
@@ -117,7 +117,7 @@ jobs:
         run: terraform apply -auto-approve tfplan
 
   destroy:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' && github.event.inputs.confirm_destroy == 'destroy'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
     runs-on: ubuntu-latest
     environment: dev
     defaults:
