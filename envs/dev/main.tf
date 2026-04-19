@@ -1,4 +1,5 @@
-data "aws_caller_identity" "current" {}
+ # initial  dev environment setup
+ data "aws_caller_identity" "current" {}
 
 module "vpc" {
   source = "../../modules/vpc"
