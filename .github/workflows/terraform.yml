@@ -1,4 +1,4 @@
-name: Terraform Dev
+name: Terraform Infrastructure
 
 on:
   pull_request:
@@ -6,19 +6,28 @@ on:
     paths:
       - 'envs/dev/**'
       - 'modules/**'
+      - '.github/workflows/terraform.yml'
   push:
     branches: [main]
     paths:
       - 'envs/dev/**'
       - 'modules/**'
+      - '.github/workflows/terraform.yml'
   workflow_dispatch:
     inputs:
       action:
-        type: choice
-        options: [plan, apply, destroy]
+        description: 'Terraform action'
+        required: true
         default: plan
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
       confirm_destroy:
+        description: 'Type "destroy" to confirm destruction'
         required: false
+        default: ''
 
 concurrency:
   group: terraform-${{ github.ref }}
@@ -26,42 +35,53 @@ concurrency:
 
 jobs:
   plan:
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.action != 'destroy'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: envs/dev
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.10.0
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - run: terraform init
-      - run: terraform fmt -check -recursive
-      - run: terraform validate
+      - name: Terraform init
+        run: terraform init
 
-      - run: |
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        run: |
           terraform plan \
             -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
             -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
             -out=tfplan
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
         with:
           name: tfplan
           path: envs/dev/tfplan
 
   apply:
     needs: plan
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
     runs-on: ubuntu-latest
     environment: dev
     defaults:
@@ -69,26 +89,32 @@ jobs:
         working-directory: envs/dev
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.10.0
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - run: terraform init
+      - name: Terraform init
+        run: terraform init
 
-      - uses: actions/download-artifact@v4
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
         with:
           name: tfplan
           path: envs/dev
 
-      - run: terraform apply -auto-approve tfplan
+      - name: Terraform apply
+        run: terraform apply -auto-approve tfplan
 
   destroy:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' && github.event.inputs.confirm_destroy == 'destroy'
@@ -99,21 +125,26 @@ jobs:
         working-directory: envs/dev
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.10.0
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - run: terraform init
+      - name: Terraform init
+        run: terraform init
 
-      - run: |
+      - name: Terraform destroy
+        run: |
           terraform destroy -auto-approve \
             -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
-                                                             -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}"
+            -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}"
