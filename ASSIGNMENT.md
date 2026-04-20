@@ -21,7 +21,7 @@ By the end of this assignment you will have:
 
 ```
 AWS Account
-└── us-east-1
+└── eu-west-2
     ├── VPC
     │   ├── Public Subnets        — NAT Gateway, Load Balancers
     │   ├── Private EKS Subnets   — EKS worker nodes

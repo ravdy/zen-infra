@@ -216,7 +216,7 @@ zen-pharma-backend/
 │  Job 3 · open-qa-pr  (needs: build + deploy-dev)                       │
 │    git checkout -b promote/qa/<service>/<image-tag>  in zen-gitops     │
 │    yq patch: envs/qa/values-<service>.yaml                             │
-│    gh pr create → your-github-username/zen-gitops                      │
+│    gh pr create → rkoneru-hub/zen-gitops                      │
 │    QA team reviews + merges the PR                                     │
 │    ArgoCD (pharma-qa) auto-syncs on merge                              │
 └────────────────────────────────────────────────────────────────────────┘
@@ -232,7 +232,7 @@ zen-pharma-backend/
 │  Validate envs/prod/values-<service>.yaml exists                       │
 │  git checkout -b promote/prod/<service>/<image-tag>  in zen-gitops     │
 │  yq patch: envs/prod/values-<service>.yaml                             │
-│  gh pr create → your-github-username/zen-gitops                        │
+│  gh pr create → rkoneru-hub/zen-gitops                        │
 │  After approvals: merge PR                                             │
 │  ArgoCD (pharma-prod) shows OutOfSync → engineer syncs manually        │
 │    at maintenance window                                               │
@@ -429,7 +429,7 @@ The IAM role trust policy is scoped to the specific GitHub org:
   "Condition": {
     "StringLike": {
       "token.actions.githubusercontent.com:sub":
-        "repo:your-github-username/zen-pharma-backend:ref:refs/heads/*"
+        "repo:rkoneru-hub/zen-pharma-backend:ref:refs/heads/*"
     }
   }
 }
@@ -503,7 +503,7 @@ Verification at deploy time can be enforced with a Kyverno policy in EKS.
 
 | Variable | Value |
 |---|---|
-| `GITOPS_REPO` | `your-github-username/zen-gitops` |
+| `GITOPS_REPO` | `rkoneru-hub/zen-gitops` |
 
 ---
 
@@ -552,7 +552,7 @@ Verification at deploy time can be enforced with a Kyverno policy in EKS.
 | `service-name` | string | yes | — | Used in artifact names |
 | `service-dir` | string | yes | — | Directory relative to repo root |
 | `ecr-repository` | string | yes | — | ECR repo name (`_java-build.yml` only) |
-| `aws-region` | string | no | `us-east-1` | AWS region |
+| `aws-region` | string | no | `eu-west-2` | AWS region |
 | `needs-database` | boolean | no | `false` | Starts a Postgres 15 sidecar for tests |
 
 **Outputs (`_java-build.yml` only):** `image-tag` (`sha-<7chars>`), `registry` (ECR URL)

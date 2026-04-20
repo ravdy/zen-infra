@@ -36,7 +36,7 @@ Engineer pushes infra change to zen-infra
                          │ Terraform creates AWS resources
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  AWS Account (us-east-1)                                     │
+│  AWS Account (eu-west-2)                                     │
 │                                                             │
 │  VPC (10.0.0.0/16)                                          │
 │  ├── Public  subnets  10.0.1/2.0/24  ── NLB, NAT Gateway   │
@@ -177,7 +177,7 @@ This is the only step that cannot be automated by the pipeline itself.
 
 ```bash
 # Replace <your-bucket-name> with your own unique name (e.g. zen-pharma-tfstate-yourname)
-# Replace <your-region> with your AWS region (e.g. us-east-1)
+# Replace <your-region> with your AWS region (e.g. eu-west-2)
 
 aws s3api create-bucket \
   --bucket <your-bucket-name> \
@@ -320,7 +320,7 @@ At the end, the script prints the **ArgoCD admin password** — save it.
 
 The script prompts for:
 - Target environment (`dev` / `qa` / `prod`)
-- GitOps repo HTTPS URL (e.g. `https://github.com/your-github-username/zen-gitops.git`)
+- GitOps repo HTTPS URL (e.g. `https://github.com/rkoneru-hub/zen-gitops.git`)
 - Your GitHub username
 - GitHub Personal Access Token (input hidden) — needs read access to zen-gitops
 
@@ -385,7 +385,7 @@ Set this repository **variable** (not secret):
 
 | Variable | Value |
 |---|---|
-| `GITOPS_REPO` | `your-github-username/zen-gitops` |
+| `GITOPS_REPO` | `rkoneru-hub/zen-gitops` |
 
 > No AWS access keys needed — CI authenticates to AWS via OIDC (keyless).
 

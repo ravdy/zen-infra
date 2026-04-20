@@ -137,12 +137,12 @@ prompt_choice ENV \
 
 prompt GITOPS_REPO_URL \
   "GitOps repository HTTPS URL" \
-  "https://github.com/your-github-username/zen-gitops.git" \
+  "https://github.com/rkoneru-hub/zen-gitops.git" \
   ""
 
 prompt GITHUB_USERNAME \
   "Your GitHub username (used for ArgoCD repo authentication)" \
-  "your-github-username" \
+  "rkoneru-hub" \
   ""
 
 prompt_secret GITOPS_TOKEN \
@@ -209,7 +209,7 @@ echo "--------------------------------------------"
 
 PROJECT_FILE="zen-gitops/argocd/projects/pharma-project.yaml"
 if [[ -f "$PROJECT_FILE" ]]; then
-  sed "s|your-github-username|${GITHUB_USERNAME}|g" "$PROJECT_FILE" | kubectl apply -f -
+  sed "s|rkoneru-hub|${GITHUB_USERNAME}|g" "$PROJECT_FILE" | kubectl apply -f -
   log "AppProject applied from $PROJECT_FILE"
 else
   warn "$PROJECT_FILE not found - creating AppProject inline."
@@ -271,14 +271,14 @@ if [[ "$ENV" == "dev" ]]; then
   for app_file in "${ORDERED_APPS[@]}"; do
     filepath="$APPS_DIR/$app_file"
     if [[ -f "$filepath" ]]; then
-      sed "s|your-github-username|${GITHUB_USERNAME}|g" "$filepath" | kubectl apply -f -
+      sed "s|rkoneru-hub|${GITHUB_USERNAME}|g" "$filepath" | kubectl apply -f -
       log "Applied: $app_file"
     else
       warn "Skipping (not found): $filepath"
     fi
   done
 else
-  sed "s|your-github-username|${GITHUB_USERNAME}|g" "$APPS_DIR/"*.yaml | kubectl apply -f -
+  sed "s|rkoneru-hub|${GITHUB_USERNAME}|g" "$APPS_DIR/"*.yaml | kubectl apply -f -
   log "Applied all manifests from $APPS_DIR/"
 fi
 

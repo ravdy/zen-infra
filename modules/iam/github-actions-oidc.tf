@@ -1,7 +1,7 @@
 # ─── GitHub Actions OIDC Federation ─────────────────────────────────────────
 #
-# Allows GitHub Actions workflows in your-github-username/zen-pharma-frontend and
-# your-github-username/zen-pharma-backend to assume an IAM role without any long-lived
+# Allows GitHub Actions workflows in rkoneru-hub/zen-pharma-frontend and
+# rkoneru-hub/zen-pharma-backend to assume an IAM role without any long-lived
 # AWS credentials stored in GitHub Secrets.
 #
 # How it works:
@@ -15,7 +15,7 @@
 #   - uses: aws-actions/configure-aws-credentials@v4
 #     with:
 #       role-to-assume: arn:aws:iam::ACCOUNT_ID:role/pharma-dev-github-actions-role
-#       aws-region: us-east-1
+#       aws-region: eu-west-2
 # ─────────────────────────────────────────────────────────────────────────────
 
 # GitHub Actions OIDC provider — one per AWS account, shared across all repos
