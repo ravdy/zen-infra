@@ -15,13 +15,6 @@ on:
       - '.github/workflows/terraform.yml'
   workflow_dispatch:
     inputs:
-      action:
-        description: 'Terraform action'
-        required: true
-        default: destroy
-        type: choice
-        options:
-          - destroy
       confirm_destroy:
         description: 'Type "destroy" to confirm destruction'
         required: true
@@ -68,14 +61,7 @@ jobs:
         run: |
           terraform plan \
             -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
-            -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
-            -out=tfplan
-
-      - name: Upload plan artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: envs/dev/tfplan
+            -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}"
 
   apply:
     if: github.event_name == 'push'
@@ -111,7 +97,7 @@ jobs:
             -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}"
 
   destroy:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' && github.event.inputs.confirm_destroy == 'destroy'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_destroy == 'destroy'
     runs-on: ubuntu-latest
     environment: dev
     defaults:
