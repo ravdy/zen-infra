@@ -16,7 +16,7 @@ module "eks" {
 
   project            = "pharma"
   env                = "dev"
-  cluster_version    = "1.33"
+  cluster_version    = "1.34"
   subnet_ids         = module.vpc.private_eks_subnet_ids
   node_instance_type = "t3.small"
   desired_capacity   = 1
@@ -45,9 +45,12 @@ module "ecr" {
   repositories = [
     "api-gateway",
     "auth-service",
-    "pharma-ui",
+    "drug-catalog-service",
+    "inventory-service",
+    "manufacturing-service",
     "notification-service",
-    "drug-catalog-service"
+    "pharma-ui",
+    "supplier-service"
   ]
 }
 
