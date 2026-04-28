@@ -83,7 +83,7 @@ jobs:
           terraform plan \
             -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
             -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
-            -var="github_org=viraj10004" \
+            -var="github_org=viraj1004" \
             -out=tfplan \
             -no-color
         continue-on-error: true
@@ -95,7 +95,7 @@ jobs:
       - name: Release state lock on failure
         if: failure() || cancelled()
         run: |
-          aws s3 rm s3://zen-pharma-terraform-state-viraj10004/envs/dev/terraform.tfstate.tflock || true
+          aws s3 rm s3://zen-pharma-terraform-state-viraj1004/envs/dev/terraform.tfstate.tflock || true
 
       - name: Upload plan file
         if: steps.plan.outcome == 'success'
@@ -152,7 +152,7 @@ jobs:
       - name: Release state lock on failure
         if: failure() || cancelled()
         run: |
-          aws s3 rm s3://zen-pharma-terraform-state-viraj10004/envs/dev/terraform.tfstate.tflock || true
+          aws s3 rm s3://zen-pharma-terraform-state-viraj1004/envs/dev/terraform.tfstate.tflock || true
 
   # ── Destroy ───────────────────────────────────────────────────────────────
   destroy:
@@ -190,11 +190,11 @@ jobs:
           terraform destroy \
             -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
             -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
-            -var="github_org=viraj10004" \
+            -var="github_org=viraj1004" \
             -auto-approve \
             -no-color
 
       - name: Release state lock on failure
         if: failure() || cancelled()
         run: |
-          aws s3 rm s3://zen-pharma-terraform-state-viraj10004/envs/dev/terraform.tfstate.tflock || true
+          aws s3 rm s3://zen-pharma-terraform-state-viraj1004/envs/dev/terraform.tfstate.tflock || true
