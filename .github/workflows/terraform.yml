@@ -95,7 +95,7 @@ jobs:
       - name: Release state lock on failure
         if: failure() || cancelled()
         run: |
-          aws s3 rm s3://zen-pharma-terraform-state-viraj1004/envs/dev/terraform.tfstate.tflock || true
+          aws s3 rm s3://zen-pharma-terraform-state-viraj9676/envs/dev/terraform.tfstate.tflock || true
 
       - name: Upload plan file
         if: steps.plan.outcome == 'success'
@@ -152,7 +152,7 @@ jobs:
       - name: Release state lock on failure
         if: failure() || cancelled()
         run: |
-          aws s3 rm s3://zen-pharma-terraform-state-viraj1004/envs/dev/terraform.tfstate.tflock || true
+          aws s3 rm s3://zen-pharma-terraform-state-viraj9676/envs/dev/terraform.tfstate.tflock || true
 
   # ── Destroy ───────────────────────────────────────────────────────────────
   destroy:
@@ -197,4 +197,4 @@ jobs:
       - name: Release state lock on failure
         if: failure() || cancelled()
         run: |
-          aws s3 rm s3://zen-pharma-terraform-state-viraj1004/envs/dev/terraform.tfstate.tflock || true
+          aws s3 rm s3://zen-pharma-terraform-state-viraj9676/envs/dev/terraform.tfstate.tflock || true
