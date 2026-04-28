@@ -684,8 +684,9 @@ ECR repositories cannot be destroyed if they contain images. If you recreated th
 **Fix — delete repos manually then re-run:**
 ```bash
 for repo in api-gateway auth-service pharma-ui notification-service drug-catalog-service; do
+  echo "Deleting $repo"
   aws ecr delete-repository \
-    --repository-name $repo \
+    --repository-name "$repo" \
     --force \
     --region us-east-1
 done
