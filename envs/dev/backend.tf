@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket       = "zen-pharma-terraform-state-rkoneru"  # Replace with your S3 bucket name
+    bucket       = "zen-pharma-tfstate-rkoneru"  # Replace with your S3 bucket name
     key          = "envs/dev/terraform.tfstate"
     region       = "eu-west-2"
     encrypt      = true
