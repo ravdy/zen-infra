@@ -108,8 +108,8 @@ resource "aws_iam_policy" "github_actions_ci_policy" {
           "ecr:ListImages",
           "ecr:DescribeImages",
         ]
-        # Restrict to pharma repos only
-        Resource = "arn:aws:ecr:*:${var.aws_account_id}:repository/*pharma*"
+        # Allow all ECR repos in this account (role is already scoped to specific GitHub repos via trust policy)
+        Resource = "arn:aws:ecr:*:${var.aws_account_id}:repository/*"
       },
       {
         Sid    = "EKSRead"

@@ -50,7 +50,7 @@ module "ecr" {
     "manufacturing-service",
     "notification-service",
     "pharma-ui",
-    "supplier-service"
+    "supplier-service",
   ]
 }
 
