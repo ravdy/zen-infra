@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # Terraform provider and module version updates
+  - package-ecosystem: "terraform"
+    directory: "/envs/dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "terraform"
+      - "dev"
+
+  - package-ecosystem: "terraform"
+    directory: "/envs/qa"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "terraform"
+      - "qa"
+
+  - package-ecosystem: "terraform"
+    directory: "/envs/prod"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "terraform"
+      - "prod"

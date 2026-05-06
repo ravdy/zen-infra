@@ -10,7 +10,7 @@ All answers are grounded in the actual architecture of this project. Questions c
 
 # Part 1 — CI/CD, GitOps & DevSecOps
 
-aaa
+
 ---
 
 ## Table of Contents
