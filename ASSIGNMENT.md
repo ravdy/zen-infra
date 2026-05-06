@@ -10,7 +10,7 @@ By the end of this assignment you will have:
 - Reusable Terraform modules shared across all environments
 - Remote state stored securely in S3 with locking
 - A GitHub Actions pipeline that plans, applies, and destroys infrastructure with proper gate controls
-
+      
 ---
 
 ## Architecture Diagram
