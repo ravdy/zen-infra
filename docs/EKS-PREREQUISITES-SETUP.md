@@ -6,7 +6,7 @@ Setup guide for installing cluster prerequisites on `pharma-dev-cluster` to supp
 
 ## Prerequisites
 
-- `kubectl` configured: `aws eks update-kubeconfig --region us-east-1 --name pharma-dev-cluster`
+- `kubectl` configured: `aws eks update-kubeconfig --region eu-west-2 --name pharma-dev-cluster`
 - `helm` v3+ installed
 - Helm repos added:
 

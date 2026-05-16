@@ -92,8 +92,8 @@ prompt CLUSTER_NAME \
 
 prompt AWS_REGION \
   "AWS region where the cluster is deployed" \
-  "us-east-1" \
-  "us-east-1"
+  "eu-west-2" \
+  "eu-west-2"
 
 echo ""
 echo "  ----- Configuration Summary -----"

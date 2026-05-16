@@ -114,8 +114,8 @@ prompt_choice ENV \
 
 prompt AWS_REGION \
   "AWS region where your Secrets Manager secrets are stored" \
-  "us-east-1" \
-  "us-east-1"
+  "eu-west-2" \
+  "eu-west-2"
 
 prompt AWS_ACCOUNT_ID \
   "AWS account ID (12-digit number - find it in the top-right of the AWS console)" \
