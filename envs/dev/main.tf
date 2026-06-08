@@ -69,25 +69,9 @@ module "iam" {
 module "secrets_manager" {
   source = "../../modules/secrets-manager"
 
-  project           = "pharma"
-  env               = "dev"
-  db_username       = "pharmaadmin"
-  db_password       = var.db_password
-  jwt_secret        = var.jwt_secret
-  github_runner_pat = var.github_runner_pat
-}
-
-module "github_runner" {
-  source = "../../modules/github-runner"
-
-  project           = "pharma"
-  env               = "dev"
-  vpc_id            = module.vpc.vpc_id
-  subnet_id         = module.vpc.private_eks_subnet_ids[0]
-  github_org        = var.github_org
-  github_repo       = var.github_runner_repo
-  instance_type     = "t3.medium"
-  gh_pat_secret_arn = module.secrets_manager.github_runner_pat_secret_arn
-  runner_labels     = ["self-hosted", "linux", "x64", "dev"]
-  tf_version        = "1.10.0"
+  project     = "pharma"
+  env         = "dev"
+  db_username = "pharmaadmin"
+  db_password = var.db_password
+  jwt_secret  = var.jwt_secret
 }

@@ -25,9 +25,3 @@ variable "jwt_secret" {
   type        = string
   sensitive   = true
 }
-
-variable "github_runner_pat" {
-  description = "GitHub PAT for self-hosted runner registration token generation"
-  type        = string
-  sensitive   = true
-}

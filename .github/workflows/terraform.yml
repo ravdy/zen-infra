@@ -84,7 +84,6 @@ jobs:
             -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
             -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
             -var="github_org=${{ vars.GH_ORG }}" \
-            -var="github_runner_pat=${{ secrets.GH_RUNNER_PAT }}" \
             -out=tfplan \
             -no-color
         continue-on-error: true
@@ -192,7 +191,6 @@ jobs:
             -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
             -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
             -var="github_org=${{ vars.GH_ORG }}" \
-            -var="github_runner_pat=${{ secrets.GH_RUNNER_PAT }}" \
             -auto-approve \
             -no-color
 
