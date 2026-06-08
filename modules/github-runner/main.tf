@@ -115,10 +115,10 @@ resource "aws_iam_instance_profile" "runner" {
 resource "aws_security_group" "runner" {
   name_prefix = "${var.project}-${var.env}-github-runner-"
   vpc_id      = var.vpc_id
-  description = "GitHub Actions self-hosted runner — outbound only"
+  description = "GitHub Actions self-hosted runner - outbound only"
 
   egress {
-    description = "All outbound (GitHub, ECR, Secrets Manager endpoints)"
+    description = "All outbound to GitHub, ECR, Secrets Manager"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
