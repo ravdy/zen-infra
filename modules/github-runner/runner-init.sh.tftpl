@@ -1,0 +1,132 @@
+#!/bin/bash
+# GitHub Actions self-hosted runner bootstrap
+# Runs as root via EC2 user_data on first boot.
+# Terraform vars: ${var}   Bash vars: $$VAR or $${VAR}
+set -euo pipefail
+exec > /var/log/github-runner-init.log 2>&1
+
+echo "=== GitHub Actions Runner Bootstrap: ${runner_name} ==="
+echo "Org: ${github_org} | Repo: '${github_repo}' | Labels: ${runner_labels}"
+date -u
+
+# ── System packages ───────────────────────────────────────────────────────────
+apt-get update -y
+DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  curl wget git jq unzip ca-certificates gnupg lsb-release libicu-dev
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $$(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt-get update -y
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+systemctl enable --now docker
+echo "Docker: $$(docker --version)"
+
+# ── AWS CLI v2 ────────────────────────────────────────────────────────────────
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+unzip -q /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
+rm -rf /tmp/aws /tmp/awscliv2.zip
+echo "AWS CLI: $$(aws --version)"
+
+# ── Node.js 20 ────────────────────────────────────────────────────────────────
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt-get install -y nodejs
+echo "Node: $$(node --version)"
+
+# ── Terraform ${tf_version} ───────────────────────────────────────────────────
+wget -q "https://releases.hashicorp.com/terraform/${tf_version}/terraform_${tf_version}_linux_amd64.zip" -O /tmp/terraform.zip
+unzip -q /tmp/terraform.zip -d /usr/local/bin
+chmod +x /usr/local/bin/terraform
+rm /tmp/terraform.zip
+echo "Terraform: $$(terraform --version | head -1)"
+
+# ── yq ────────────────────────────────────────────────────────────────────────
+wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+chmod +x /usr/local/bin/yq
+echo "yq: $$(yq --version)"
+
+# ── GitHub CLI ────────────────────────────────────────────────────────────────
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+  | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
+chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=$$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+apt-get update -y && apt-get install -y gh
+echo "gh: $$(gh --version | head -1)"
+
+# ── Runner user ───────────────────────────────────────────────────────────────
+id runner 2>/dev/null || useradd -m -s /bin/bash runner
+usermod -aG docker runner
+
+# ── Download GitHub Actions runner binary ────────────────────────────────────
+RUNNER_DIR="/home/runner/actions-runner"
+mkdir -p "$$RUNNER_DIR"
+
+# Get latest version from API; fall back to a known stable version if the call fails
+RUNNER_VERSION=$$(curl -sSL --max-time 15 \
+  "https://api.github.com/repos/actions/runner/releases/latest" \
+  | jq -r '.tag_name // empty' | tr -d v 2>/dev/null || true)
+[[ -z "$$RUNNER_VERSION" ]] && RUNNER_VERSION="${tf_version%.*}.0" || true
+[[ -z "$$RUNNER_VERSION" ]] && RUNNER_VERSION="2.322.0"
+echo "Runner version: $$RUNNER_VERSION"
+
+RUNNER_ARCHIVE="actions-runner-linux-x64-$${RUNNER_VERSION}.tar.gz"
+curl -fsSL -o "/tmp/$$RUNNER_ARCHIVE" \
+  "https://github.com/actions/runner/releases/download/v$${RUNNER_VERSION}/$$RUNNER_ARCHIVE"
+tar xzf "/tmp/$$RUNNER_ARCHIVE" -C "$$RUNNER_DIR"
+rm "/tmp/$$RUNNER_ARCHIVE"
+chown -R runner:runner "$$RUNNER_DIR"
+
+# ── Fetch Classic PAT from Secrets Manager and generate registration token ────
+# Must be a Classic PAT with repo scope. Fine-grained PATs are NOT supported
+# by the runner registration API (returns 403).
+GH_PAT=$$(aws secretsmanager get-secret-value \
+  --secret-id "${gh_pat_secret_arn}" \
+  --query "SecretString" \
+  --output text \
+  --region "${aws_region}" \
+  | jq -r '.pat')
+
+%{ if github_repo != "" ~}
+REGISTER_URL="https://github.com/${github_org}/${github_repo}"
+TOKEN_API="https://api.github.com/repos/${github_org}/${github_repo}/actions/runners/registration-token"
+%{ else ~}
+REGISTER_URL="https://github.com/${github_org}"
+TOKEN_API="https://api.github.com/orgs/${github_org}/actions/runners/registration-token"
+%{ endif ~}
+
+RUNNER_TOKEN=$$(curl -sSL \
+  -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $$GH_PAT" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "$$TOKEN_API" | jq -r '.token')
+
+unset GH_PAT
+
+if [[ -z "$$RUNNER_TOKEN" || "$$RUNNER_TOKEN" == "null" ]]; then
+  echo "ERROR: Failed to obtain runner registration token. Check PAT scope (must be Classic with repo scope)."
+  exit 1
+fi
+
+# ── Configure and register the runner ────────────────────────────────────────
+sudo -u runner "$$RUNNER_DIR/config.sh" \
+  --url        "$$REGISTER_URL" \
+  --token      "$$RUNNER_TOKEN" \
+  --name       "${runner_name}" \
+  --labels     "${runner_labels}" \
+  --unattended \
+  --replace
+
+unset RUNNER_TOKEN
+
+# ── Install as a systemd service and start ───────────────────────────────────
+bash -c "cd $$RUNNER_DIR && ./svc.sh install runner"
+bash -c "cd $$RUNNER_DIR && ./svc.sh start"
+
+systemctl is-active --quiet actions.runner.* && \
+  echo "=== Bootstrap complete — runner '${runner_name}' is online ===" || \
+  { echo "ERROR: runner service failed to start"; exit 1; }

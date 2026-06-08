@@ -36,3 +36,20 @@ resource "aws_secretsmanager_secret_version" "jwt_secret" {
     secret = var.jwt_secret
   })
 }
+
+resource "aws_secretsmanager_secret" "github_runner_pat" {
+  name                    = "/pharma/${var.env}/github-runner-pat"
+  description             = "GitHub PAT used by the self-hosted Actions runner to obtain registration tokens (${var.env})"
+  recovery_window_in_days = 0
+
+  tags = {
+    Name    = "/pharma/${var.env}/github-runner-pat"
+    Env     = var.env
+    Project = var.project
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "github_runner_pat" {
+  secret_id     = aws_secretsmanager_secret.github_runner_pat.id
+  secret_string = jsonencode({ pat = var.github_runner_pat })
+}
