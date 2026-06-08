@@ -23,7 +23,7 @@ variable "github_runner_pat" {
 }
 
 variable "github_runner_repo" {
-  description = "Repo-level runner target (e.g. zen-pharma-frontend). Leave empty for an org-level runner shared across all repos."
+  description = "Repo-level runner target. Personal accounts must set this — org-level runners require a GitHub Organisation."
   type        = string
-  default     = ""
+  default     = "zen-pharma-frontend"
 }
