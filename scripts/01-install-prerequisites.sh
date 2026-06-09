@@ -3,9 +3,9 @@
 # Stage 2 - Install Kubernetes Pre-requisites
 #
 # Installs on the EKS cluster (must already exist from Stage 1 Terraform):
-#   1. NGINX Ingress Controller   - exposes services via AWS NLB
-#   2. ArgoCD                     - GitOps CD controller
-#   3. External Secrets Operator  - syncs AWS Secrets Manager -> K8s Secrets
+#   1. AWS Load Balancer Controller - manages ALBs via ingressClassName: alb
+#   2. ArgoCD                       - GitOps CD controller
+#   3. External Secrets Operator    - syncs AWS Secrets Manager -> K8s Secrets
 #
 # Run from the root of the dpp-assignment3 directory.
 # The script prompts for all required values - nothing is hardcoded.
@@ -74,16 +74,18 @@ echo "============================================"
 echo "  Zen Pharma -- Pre-requisites Installer"
 echo "============================================"
 echo ""
-echo "  This script installs NGINX Ingress, ArgoCD, and External Secrets"
-echo "  Operator on your EKS cluster using Helm."
+echo "  This script installs the AWS Load Balancer Controller, ArgoCD, and"
+echo "  External Secrets Operator on your EKS cluster using Helm."
 echo ""
-echo "  You will be asked for 2 values:"
+echo "  You will be asked for 3 values:"
 echo "    1. EKS cluster name  - from Terraform outputs or AWS console"
 echo "    2. AWS region        - where your cluster is running"
+echo "    3. AWS LBC role ARN  - from Terraform iam module output (aws_lbc_role_arn)"
 echo ""
 
 CLUSTER_NAME=""
 AWS_REGION=""
+LBC_ROLE_ARN=""
 
 prompt CLUSTER_NAME \
   "EKS cluster name" \
@@ -95,10 +97,16 @@ prompt AWS_REGION \
   "us-east-1" \
   "us-east-1"
 
+prompt LBC_ROLE_ARN \
+  "AWS Load Balancer Controller IAM role ARN (from Terraform output aws_lbc_role_arn)" \
+  "arn:aws:iam::123456789012:role/pharma-dev-aws-lbc-role" \
+  ""
+
 echo ""
 echo "  ----- Configuration Summary -----"
-echo "  Cluster : $CLUSTER_NAME"
-echo "  Region  : $AWS_REGION"
+echo "  Cluster      : $CLUSTER_NAME"
+echo "  Region       : $AWS_REGION"
+echo "  LBC Role ARN : $LBC_ROLE_ARN"
 echo "  ---------------------------------"
 echo ""
 echo -ne "  Proceed with installation? [Y/n]: "
@@ -122,37 +130,41 @@ log "kubectl context: $(kubectl config current-context)"
 # =============================================================================
 echo ""
 info "Adding Helm repositories..."
-helm repo add ingress-nginx    https://kubernetes.github.io/ingress-nginx --force-update 2>/dev/null
+helm repo add eks              https://aws.github.io/eks-charts           --force-update 2>/dev/null
 helm repo add external-secrets https://charts.external-secrets.io         --force-update 2>/dev/null
 helm repo add argo             https://argoproj.github.io/argo-helm       --force-update 2>/dev/null
 helm repo update
 log "Helm repos updated."
 
 # =============================================================================
-# Step 1 - NGINX Ingress Controller
+# Step 1 - AWS Load Balancer Controller
 #
-# Creates an AWS Network Load Balancer that routes external HTTP/S traffic
-# into the cluster. All services are exposed through this single NLB.
+# Manages AWS ALBs directly from Kubernetes Ingress resources using
+# ingressClassName: alb. Replaces the deprecated ingress-nginx controller.
+# The controller uses IRSA (IAM Roles for Service Accounts) for AWS API access.
 # =============================================================================
 echo ""
 echo "--------------------------------------------"
-echo "  Step 1 of 3: NGINX Ingress Controller"
+echo "  Step 1 of 3: AWS Load Balancer Controller"
 echo "--------------------------------------------"
 
-helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
-  --namespace ingress-nginx \
-  --create-namespace \
-  --set controller.service.type=LoadBalancer \
-  --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"="nlb" \
-  --set controller.replicaCount=2 \
+# The CRDs must be installed before the controller chart
+kubectl apply -k "github.com/aws/eks-charts/stable/aws-load-balancer-controller/crds?ref=master" 2>/dev/null \
+  || warn "CRD apply via kustomize failed - they may already exist, continuing."
+
+helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  --namespace kube-system \
+  --set clusterName="$CLUSTER_NAME" \
+  --set serviceAccount.create=true \
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="$LBC_ROLE_ARN" \
+  --set region="$AWS_REGION" \
+  --set replicaCount=2 \
   --wait --timeout 5m
 
-log "NGINX Ingress Controller installed."
-
-NLB_HOSTNAME=$(kubectl get svc -n ingress-nginx ingress-nginx-controller \
-  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "pending")
-log "NLB hostname: $NLB_HOSTNAME"
-echo "  NOTE: This hostname is your application entry point. Save it."
+log "AWS Load Balancer Controller installed."
+echo "  NOTE: ALBs are now created on demand when Ingress resources with"
+echo "        ingressClassName: alb are applied. No pre-provisioned LB hostname."
 
 # =============================================================================
 # Step 2 - ArgoCD
@@ -221,8 +233,8 @@ echo "--------------------------------------------"
 echo "  Verification"
 echo "--------------------------------------------"
 echo ""
-echo "NGINX Ingress pods (namespace: ingress-nginx):"
-kubectl get pods -n ingress-nginx
+echo "AWS Load Balancer Controller pods (namespace: kube-system):"
+kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
 echo ""
 echo "ArgoCD pods (namespace: argocd):"
 kubectl get pods -n argocd
@@ -234,7 +246,7 @@ echo ""
 log "All pre-requisites installed successfully."
 echo ""
 echo "  Summary:"
-echo "    NLB hostname : $NLB_HOSTNAME"
 echo "    ArgoCD pass  : $ARGOCD_PASSWORD"
+echo "    ALBs are provisioned dynamically when Ingress resources are created."
 echo ""
 echo "Next step: ./scripts/02-bootstrap-argocd.sh"
