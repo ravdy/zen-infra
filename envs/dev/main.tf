@@ -73,5 +73,6 @@ module "secrets_manager" {
   env         = "dev"
   db_username = "pharmaadmin"
   db_password = var.db_password
+  db_host     = module.rds.db_endpoint
   jwt_secret  = var.jwt_secret
 }

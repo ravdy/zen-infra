@@ -25,3 +25,8 @@ variable "jwt_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "db_host" {
+  description = "RDS endpoint hostname to store alongside credentials"
+  type        = string
+}

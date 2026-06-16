@@ -272,6 +272,10 @@ spec:
       remoteRef:
         key: /pharma/{ENV}/db-credentials
         property: password
+    - secretKey: DB_HOST
+      remoteRef:
+        key: /pharma/{ENV}/db-credentials
+        property: host
 """
 kubectl_apply_yaml(db_external_secret)
 
