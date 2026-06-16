@@ -356,4 +356,4 @@ else:
 print()
 log("External Secrets setup complete.")
 print()
-print("Next step: ./scripts/04_verify_deployment.py")
+print("Next step: ./scripts/06_verify_deployment.py")

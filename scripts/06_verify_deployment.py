@@ -7,7 +7,7 @@
 #   2. ArgoCD apps      - all Synced and Healthy
 #   3. External Secrets - all SecretSynced
 #   4. Services/Ingress - resources created
-#   5. HTTP endpoints   - health checks via NLB
+#   5. HTTP endpoints   - health checks via ALB
 #
 # Run from the root of the dpp-assignment3 directory.
 # =============================================================================
@@ -203,21 +203,32 @@ print()
 run_cmd(["kubectl", "get", "ingress", "-n", ENV], ok_fail=True)
 print()
 
-nlb_hostname, _ = run_cmd(
-    ["kubectl", "get", "svc", "-n", "ingress-nginx", "ingress-nginx-controller",
+# ALB hostname is provisioned per-Ingress by the AWS Load Balancer Controller.
+# We read it from the pharma-ui ingress (the group's primary entry point).
+alb_hostname, _ = run_cmd(
+    ["kubectl", "get", "ingress", "pharma-ui", "-n", ENV,
      "-o", "jsonpath={.status.loadBalancer.ingress[0].hostname}"],
     capture=True, ok_fail=True,
 )
 
-if nlb_hostname:
-    log(f"NLB hostname: {nlb_hostname}")
+if not alb_hostname:
+    # Fallback: try any ingress in the namespace
+    alb_hostname, _ = run_cmd(
+        ["kubectl", "get", "ingress", "-n", ENV,
+         "-o", "jsonpath={.items[0].status.loadBalancer.ingress[0].hostname}"],
+        capture=True, ok_fail=True,
+    )
+
+if alb_hostname:
+    log(f"ALB hostname: {alb_hostname}")
 else:
-    warn("NLB hostname not available yet -- skipping HTTP endpoint checks.")
+    warn("ALB hostname not available yet -- the AWS Load Balancer Controller may still be provisioning.")
+    warn("  Check: kubectl get ingress -n " + ENV)
 
 # ---------------------------------------------------------------------------
 # Check 5 - HTTP health endpoints
 # ---------------------------------------------------------------------------
-if nlb_hostname:
+if alb_hostname:
     print("--------------------------------------------")
     print("  Check 5 of 5: HTTP Endpoint Health")
     print("--------------------------------------------")
@@ -233,7 +244,7 @@ if nlb_hostname:
         "manufacturing-service": "/api/manufacturing/actuator/health",
     }
 
-    base_url = f"http://{nlb_hostname}"
+    base_url = f"http://{alb_hostname}"
 
     for service, path in health_paths.items():
         url = f"{base_url}{path}"
@@ -259,8 +270,8 @@ print("============================================")
 if ERRORS == 0:
     print(f"{GREEN}  ALL CHECKS PASSED{NC}")
     print()
-    if nlb_hostname:
-        print(f"  Application URL : http://{nlb_hostname}/")
+    if alb_hostname:
+        print(f"  Application URL : http://{alb_hostname}/")
     print("  ArgoCD UI       : https://localhost:8080")
     print("                    (kubectl port-forward svc/argocd-server -n argocd 8080:443)")
 else:

@@ -5,18 +5,21 @@
 # After ArgoCD is installed (script 01), this script:
 #   1. Registers your zen-gitops repo in ArgoCD
 #   2. Creates the pharma AppProject
-#   3. Deploys all ArgoCD Application manifests for the target environment
 #
-# Run from the root of the dpp-assignment3 directory.
+# Application deployment is handled by 05_deploy_services.py
+#
+# Run from anywhere — paths are resolved relative to this script's location.
 # =============================================================================
 
 import getpass
-import glob
 import os
 import re
 import subprocess
 import sys
 from datetime import datetime
+
+# Project root is two levels above this script (zen-infra/scripts/ → project root)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # ---------------------------------------------------------------------------
 # Logging helpers
@@ -221,7 +224,7 @@ print("--------------------------------------------")
 print("  Step 2 of 3: Create pharma AppProject")
 print("--------------------------------------------")
 
-project_file = "zen-gitops/argocd/projects/pharma-project.yaml"
+project_file = os.path.join(PROJECT_ROOT, "zen-gitops/argocd/projects/pharma-project.yaml")
 if os.path.isfile(project_file):
     with open(project_file) as f:
         content = f.read().replace("your-github-username", GITHUB_USERNAME)
@@ -258,64 +261,17 @@ spec:
     kubectl_apply_yaml(inline_project)
     log("AppProject created.")
 
-# ---------------------------------------------------------------------------
-# Step 3 - Deploy ArgoCD Application manifests
-# ---------------------------------------------------------------------------
-print()
-print("--------------------------------------------")
-print(f"  Step 3 of 3: Deploy Applications ({ENV})")
-print("--------------------------------------------")
-
-apps_dir = f"zen-gitops/argocd/apps/{ENV}"
-if not os.path.isdir(apps_dir):
-    die(f"Apps directory not found: {apps_dir}")
-
-def apply_app_file(filepath):
-    with open(filepath) as f:
-        content = f.read().replace("your-github-username", GITHUB_USERNAME)
-    kubectl_apply_yaml(content)
-
-if ENV == "dev":
-    ordered_apps = [
-        "auth-service-app.yaml",
-        "catalog-service-app.yaml",
-        "inventory-service-app.yaml",
-        "supplier-service-app.yaml",
-        "manufacturing-service-app.yaml",
-        "notification-service-app.yaml",
-        "api-gateway-app.yaml",
-        "pharma-ui-app.yaml",
-    ]
-    for app_file in ordered_apps:
-        filepath = os.path.join(apps_dir, app_file)
-        if os.path.isfile(filepath):
-            apply_app_file(filepath)
-            log(f"Applied: {app_file}")
-        else:
-            warn(f"Skipping (not found): {filepath}")
-else:
-    for filepath in sorted(glob.glob(os.path.join(apps_dir, "*.yaml"))):
-        apply_app_file(filepath)
-    log(f"Applied all manifests from {apps_dir}/")
-
-# ---------------------------------------------------------------------------
-# Show sync status
-# ---------------------------------------------------------------------------
-print()
-print("--------------------------------------------")
-print("  ArgoCD Application Status")
-print("--------------------------------------------")
-print()
-run_cmd(["kubectl", "get", "applications", "-n", ARGOCD_NAMESPACE])
-
 print()
 log(f"ArgoCD bootstrap complete for environment: {ENV}")
 print()
-print("  ArgoCD is now syncing. To watch progress:")
-print("    kubectl get applications -n argocd -w")
+print("  ArgoCD repo and AppProject are configured.")
+print("  Applications will be deployed in step 05 after images are built.")
 print()
 print("  To open ArgoCD UI:")
 print("    kubectl port-forward svc/argocd-server -n argocd 8080:443")
 print("    Open: https://localhost:8080  (login: admin / <password from script 01>)")
 print()
-print("Next step: ./scripts/03_setup_external_secrets.py")
+print("Next steps:")
+print("  3. python3 scripts/03_setup_external_secrets.py")
+print("  4. python3 scripts/04_run_pipeline.py    ← build images")
+print("  5. python3 scripts/05_deploy_services.py ← deploy to cluster")
