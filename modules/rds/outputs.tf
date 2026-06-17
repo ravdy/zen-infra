@@ -1,6 +1,11 @@
 output "db_instance_endpoint" {
-  description = "Connection endpoint for the RDS instance"
+  description = "Connection endpoint for the RDS instance (hostname:port)"
   value       = module.rds.db_instance_endpoint
+}
+
+output "db_instance_address" {
+  description = "Hostname of the RDS instance (without port)"
+  value       = module.rds.db_instance_address
 }
 
 output "db_instance_port" {
