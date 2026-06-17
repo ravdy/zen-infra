@@ -45,14 +45,14 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0"
 
-  cluster_name    = "${local.project}-${local.env}-cluster"
-  cluster_version = "1.33"
+  name               = "${local.project}-${local.env}-cluster"
+  kubernetes_version = "1.33"
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
-  cluster_endpoint_private_access = true
-  cluster_endpoint_public_access  = true
+  endpoint_private_access = true
+  endpoint_public_access  = true
 
   enable_irsa = true
 
@@ -120,7 +120,8 @@ module "rds" {
   db_name                     = "pharmadb"
   username                    = "pharmaadmin"
   manage_master_user_password = false
-  password                    = var.db_password
+  password_wo                 = var.db_password
+  password_wo_version         = 1
 
   multi_az               = false
   db_subnet_group_name   = module.vpc.database_subnet_group_name
