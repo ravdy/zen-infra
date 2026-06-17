@@ -11,8 +11,18 @@ module "eks" {
   endpoint_private_access = true
   endpoint_public_access  = true
 
-  enable_irsa                                = true
-  enable_cluster_creator_admin_permissions   = true
+  enable_irsa                              = true
+  enable_cluster_creator_admin_permissions = true
+
+  addons = {
+    vpc-cni = {
+      most_recent    = true
+      before_compute = true
+    }
+    kube-proxy             = { most_recent = true }
+    coredns                = { most_recent = true }
+    eks-pod-identity-agent = { most_recent = true }
+  }
 
   eks_managed_node_groups = {
     main = {
