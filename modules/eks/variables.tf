@@ -8,27 +8,32 @@ variable "env" {
   type        = string
 }
 
-variable "cluster_version" {
+variable "vpc_id" {
+  description = "VPC ID for the EKS cluster"
+  type        = string
+}
+
+variable "subnet_ids" {
+  description = "Subnet IDs for EKS nodes"
+  type        = list(string)
+}
+
+variable "kubernetes_version" {
   description = "Kubernetes version for the EKS cluster"
   type        = string
   default     = "1.33"
 }
 
-variable "subnet_ids" {
-  description = "List of subnet IDs for the EKS cluster and node groups"
+variable "instance_types" {
+  description = "EC2 instance types for the node group"
   type        = list(string)
+  default     = ["t3.medium"]
 }
 
-variable "node_instance_type" {
-  description = "EC2 instance type for EKS worker nodes"
-  type        = string
-  default     = "t3.medium"
-}
-
-variable "desired_capacity" {
+variable "desired_size" {
   description = "Desired number of worker nodes"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "min_size" {
@@ -40,5 +45,5 @@ variable "min_size" {
 variable "max_size" {
   description = "Maximum number of worker nodes"
   type        = number
-  default     = 1
+  default     = 3
 }

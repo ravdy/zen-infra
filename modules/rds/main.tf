@@ -1,14 +1,3 @@
-resource "aws_db_subnet_group" "main" {
-  name       = "${var.project}-${var.env}-rds-subnet-group"
-  subnet_ids = var.subnet_ids
-
-  tags = {
-    Name    = "${var.project}-${var.env}-rds-subnet-group"
-    Env     = var.env
-    Project = var.project
-  }
-}
-
 resource "aws_security_group" "rds" {
   name        = "${var.project}-${var.env}-rds-sg"
   description = "Security group for RDS PostgreSQL instance"
@@ -19,7 +8,7 @@ resource "aws_security_group" "rds" {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [var.eks_security_group_id]
+    security_groups = [var.eks_node_security_group_id]
   }
 
   egress {
@@ -31,33 +20,47 @@ resource "aws_security_group" "rds" {
 
   tags = {
     Name    = "${var.project}-${var.env}-rds-sg"
-    Env     = var.env
     Project = var.project
+    Env     = var.env
   }
 }
 
-resource "aws_db_instance" "main" {
-  identifier             = "${var.project}-${var.env}-postgres"
-  engine                 = "postgres"
-  engine_version         = "15.7"
-  instance_class         = "db.t3.micro"
-  allocated_storage      = 20
-  storage_type           = "gp2"
-  db_name                = var.db_name
-  username               = var.db_username
-  password               = var.db_password
-  db_subnet_group_name   = aws_db_subnet_group.main.name
+module "rds" {
+  source  = "terraform-aws-modules/rds/aws"
+  version = "~> 7.0"
+
+  identifier = "${var.project}-${var.env}-postgres"
+
+  engine               = "postgres"
+  engine_version       = "17.9"
+  family               = "postgres17"
+  major_engine_version = "17"
+  instance_class       = var.instance_class
+
+  allocated_storage = var.allocated_storage
+  storage_type      = "gp3"
+
+  db_name                     = var.db_name
+  username                    = var.username
+  manage_master_user_password = false
+  password_wo                 = var.password
+  password_wo_version         = var.password_version
+
+  multi_az               = var.multi_az
+  db_subnet_group_name   = var.db_subnet_group_name
   vpc_security_group_ids = [aws_security_group.rds.id]
-  multi_az               = var.env == "prod" ? true : false
-  skip_final_snapshot    = var.env == "prod" ? false : true
-  backup_retention_period = var.env == "prod" ? 7 : 0
-  storage_encrypted      = true
-  deletion_protection    = var.env == "prod" ? true : false
-  publicly_accessible    = false
+
+  skip_final_snapshot     = var.skip_final_snapshot
+  backup_retention_period = var.backup_retention_period
+  storage_encrypted       = true
+  deletion_protection     = var.deletion_protection
+  publicly_accessible     = false
+
+  create_db_option_group = false
 
   tags = {
     Name    = "${var.project}-${var.env}-postgres"
-    Env     = var.env
     Project = var.project
+    Env     = var.env
   }
 }

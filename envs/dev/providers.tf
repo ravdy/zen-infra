@@ -1,14 +1,14 @@
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.11.0"
 
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
+      version = "~> 3.0"
     }
     tls = {
       source  = "hashicorp/tls"
@@ -22,16 +22,16 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = "pharma"
-      Env         = "dev"
-      ManagedBy   = "terraform"
+      Project   = "pharma"
+      Env       = "dev"
+      ManagedBy = "terraform"
     }
   }
 }
 
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_ca)
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
 
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"

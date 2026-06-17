@@ -1,47 +1,58 @@
+locals {
+  project = "pharma"
+  env     = "prod"
+  region  = "us-east-1"
+}
+
 data "aws_caller_identity" "current" {}
 
 module "vpc" {
   source = "../../modules/vpc"
 
-  project                  = "pharma"
-  env                      = "prod"
-  vpc_cidr                 = "10.2.0.0/16"
-  public_subnet_cidrs      = ["10.2.1.0/24", "10.2.2.0/24"]
-  private_eks_subnet_cidrs = ["10.2.3.0/24", "10.2.4.0/24"]
-  private_rds_subnet_cidrs = ["10.2.5.0/24", "10.2.6.0/24"]
+  project               = local.project
+  env                   = local.env
+  region                = local.region
+  vpc_cidr              = "10.2.0.0/16"
+  public_subnet_cidrs   = ["10.2.1.0/24", "10.2.2.0/24"]
+  private_subnet_cidrs  = ["10.2.3.0/24", "10.2.4.0/24"]
+  database_subnet_cidrs = ["10.2.5.0/24", "10.2.6.0/24"]
 }
 
 module "eks" {
   source = "../../modules/eks"
 
-  project            = "pharma"
-  env                = "prod"
-  cluster_version    = "1.33"
-  subnet_ids         = module.vpc.private_eks_subnet_ids
-  node_instance_type = "t3.medium"
-  desired_capacity   = 2
+  project            = local.project
+  env                = local.env
+  vpc_id             = module.vpc.vpc_id
+  subnet_ids         = module.vpc.private_subnets
+  kubernetes_version = "1.33"
+  instance_types     = ["t3.medium"]
   min_size           = 2
   max_size           = 5
+  desired_size       = 2
 }
 
 module "rds" {
   source = "../../modules/rds"
 
-  project               = "pharma"
-  env                   = "prod"
-  subnet_ids            = module.vpc.private_rds_subnet_ids
-  vpc_id                = module.vpc.vpc_id
-  eks_security_group_id = module.eks.node_group_arn
-  db_name               = "pharmadb"
-  db_username           = "pharmaadmin"
-  db_password           = var.db_password
+  project                    = local.project
+  env                        = local.env
+  username                   = "pharmaadmin"
+  password                   = var.db_password
+  vpc_id                     = module.vpc.vpc_id
+  db_subnet_group_name       = module.vpc.database_subnet_group_name
+  eks_node_security_group_id = module.eks.node_security_group_id
+  multi_az                   = true
+  skip_final_snapshot        = false
+  backup_retention_period    = 7
+  deletion_protection        = true
 }
 
 module "ecr" {
   source = "../../modules/ecr"
 
-  project = "pharma"
-  env     = "prod"
+  project = local.project
+  env     = local.env
   repositories = [
     "api-gateway",
     "auth-service",
@@ -57,10 +68,10 @@ module "ecr" {
 module "iam" {
   source = "../../modules/iam"
 
-  project           = "pharma"
-  env               = "prod"
+  project           = local.project
+  env               = local.env
   oidc_provider_arn = module.eks.oidc_provider_arn
-  oidc_provider_url = module.eks.oidc_provider_url
+  oidc_provider_url = module.eks.cluster_oidc_issuer_url
   aws_account_id    = data.aws_caller_identity.current.account_id
   github_org        = var.github_org
 }
@@ -68,9 +79,10 @@ module "iam" {
 module "secrets_manager" {
   source = "../../modules/secrets-manager"
 
-  project     = "pharma"
-  env         = "prod"
+  project     = local.project
+  env         = local.env
   db_username = "pharmaadmin"
   db_password = var.db_password
+  db_host     = module.rds.db_instance_endpoint
   jwt_secret  = var.jwt_secret
 }
